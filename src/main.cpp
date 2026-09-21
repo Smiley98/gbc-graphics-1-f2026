@@ -18,6 +18,8 @@ int main(void)
         return -1;
     }
 
+    // TODO - Setup debug output, enable GL_DEBUG_OUTPUT_SYNCHRONOUS
+
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
