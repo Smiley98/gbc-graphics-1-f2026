@@ -35,22 +35,100 @@ int main(void)
     glDebugMessageCallback(DebugCallback, nullptr);
 #endif
 
-    // 2D math test
-    Vector2 a2 = { 1.0f, 2.0f };
-    Vector2 b2 = { 3.0f, 4.0f };
-    Vector2 c2 = a2 + b2;
-    Vector2 d2 = (a2 - b2) * 10.0f;
+    // Face-culling is disabled by default, but we should remember that OpenGL defines front-faces as CCW winding-order
+    Vector3 triangle_positions[] =
+    {
+        {  0.0f,  0.5f, 0.0 },
+        { -0.5f, -0.5f, 0.0 },
+        {  0.5f, -0.5f, 0.0 }
+    };
 
-    // 3D math test
-    Vector3 a3 = { 1.0f, 2.0f, 3.0f };
-    Vector3 b3 = { 4.0f, 5.0f, 6.0f };
-    Vector3 c3 = a3 + b3;
-    Vector3 d3 = (a3 - b3) * 0.5f;
+    Vector3 triangle_colors[] =
+    {
+        {  1.0f, 0.0f, 0.0 },
+        {  0.0f, 1.0f, 0.0 },
+        {  0.0f, 0.0f, 1.0 }
+    };
+
+    GLuint triangle_vao = GL_NONE;
+    GLuint triangle_positions_vbo = GL_NONE;
+    GLuint triangle_colors_vbo = GL_NONE;
+
+    glGenVertexArrays(1, &triangle_vao);
+    glGenBuffers(1, &triangle_positions_vbo);
+    glGenBuffers(1, &triangle_colors_vbo);
+
+    glBindVertexArray(triangle_vao);                            // "Record the following state of vertex buffers within this vertex array"
+
+    glBindBuffer(GL_ARRAY_BUFFER, triangle_positions_vbo);      // The following array (vertex) buffer will be described (triangle_positions_vbo):
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);// Index 0, 3 components, float data, no implicit normalization, no stride, no offset
+    glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(Vector3), triangle_positions, GL_STATIC_DRAW); // Transfer memory of triangle_positions into currently bound vbo
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, triangle_colors_vbo);         // The following array (vertex) buffer will be described (triangle_colors_vbo):
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);// Index 1, 3 components, float data, no implicit normalization, no stride, no offset
+    glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(Vector3), triangle_colors, GL_STATIC_DRAW); // Transfer memory of triangle_colors into currently bound vbo
+    glEnableVertexAttribArray(1);
+
+    glBindVertexArray(GL_NONE);                                 // "Stop recording vertex buffer state"
+
+    const char* vertex_shader_source[] = 
+    {
+        "layout(location = 0) in vec3 vertex_position;"
+        "layout(location = 1) in vec3 vertex_colour;"
+        "out vec3 colour;"
+        "void main() {"
+        "colour = vertex_colour;"
+        "gl_Position = vec4(vertex_position, 1.0);"
+        "}"
+    };
+
+    const char* fragment_shader_source[] =
+    {
+        "in vec3 colour;"
+        "out vec4 frag_colour;"
+        "void main() {"
+        "frag_colour = vec4(colour, 1.0);"
+        "}"
+    };
+
+    GLint compile_status = -1;
+    GLchar compile_log[512];
+
+    GLuint vertex_shader_handle = glCreateShader(GL_VERTEX_SHADER);
+    GLuint fragment_shader_handle = glCreateShader(GL_FRAGMENT_SHADER);
+
+    glShaderSource(vertex_shader_handle, 1, vertex_shader_source, NULL);
+    glCompileShader(vertex_shader_handle);
+    glGetShaderiv(vertex_shader_handle, GL_COMPILE_STATUS, &compile_status);
+    if (!compile_status)
+    {
+        glGetShaderInfoLog(vertex_shader_handle, 512, NULL, compile_log);
+        std::cout << "Shader failed to compile: \n" << compile_log << std::endl;
+    }
+
+    glShaderSource(fragment_shader_handle, 1, fragment_shader_source, NULL);
+    glCompileShader(fragment_shader_handle);
+    glGetShaderiv(fragment_shader_handle, GL_COMPILE_STATUS, &compile_status);
+    if (!compile_status)
+    {
+        glGetShaderInfoLog(fragment_shader_handle, 512, NULL, compile_log);
+        std::cout << "Shader failed to compile: \n" << compile_log << std::endl;
+    }
+
+    GLuint shader_program = glCreateProgram();
+    glAttachShader(shader_program, vertex_shader_handle);
+    glAttachShader(shader_program, fragment_shader_handle);
+    glLinkProgram(shader_program);
 
     while (!glfwWindowShouldClose(window))
     {
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        glUseProgram(shader_program);
+        glBindVertexArray(triangle_vao);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
