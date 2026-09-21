@@ -1,5 +1,6 @@
-#include <glad/glad.h>
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+#include <glad/glad.h>
 
 int main(void)
 {
@@ -20,11 +21,14 @@ int main(void)
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
+    // We forgot to initialize glad; our OpenGL extension-loader, so when we called glClear the funciton was not loaded
+    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
-        //glClear(GL_COLOR_BUFFER_BIT); // <-- runtime error. We will debug this next time. I will come to class prepared with the solution!
+        glClear(GL_COLOR_BUFFER_BIT);
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
