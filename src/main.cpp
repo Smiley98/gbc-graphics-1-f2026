@@ -1,6 +1,7 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
+#include <raymath.h>
 #include <cassert>
 #include <iostream>
 
@@ -33,6 +34,18 @@ int main(void)
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(DebugCallback, nullptr);
 #endif
+
+    // 2D math test
+    Vector2 a2 = { 1.0f, 2.0f };
+    Vector2 b2 = { 3.0f, 4.0f };
+    Vector2 c2 = a2 + b2;
+    Vector2 d2 = (a2 - b2) * 10.0f;
+
+    // 3D math test
+    Vector3 a3 = { 1.0f, 2.0f, 3.0f };
+    Vector3 b3 = { 4.0f, 5.0f, 6.0f };
+    Vector3 c3 = a3 + b3;
+    Vector3 d3 = (a3 - b3) * 0.5f;
 
     while (!glfwWindowShouldClose(window))
     {
