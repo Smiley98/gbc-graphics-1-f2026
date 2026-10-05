@@ -18,7 +18,6 @@ struct DrawCall
 {
     GLuint shader;
     GLuint vao;
-
 };
 
 void DrawObject0(App* app, DrawCall draw);
@@ -187,6 +186,10 @@ void DrawObject1(App * app, DrawCall draw)
     glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(draw.shader);
+    Matrix m = MatrixTranslate(0.5f, sinf(glfwGetTime()), 0.0f);
+    GLuint loc = glad_glGetUniformLocation(draw.shader, "transform");
+    glUniformMatrix4fv(loc, 1, GL_FALSE, MatrixToFloat(m));
+
     glBindVertexArray(draw.vao);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }
