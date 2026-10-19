@@ -48,25 +48,40 @@ int main(void)
     glDebugMessageCallback(DebugCallback, nullptr);
 #endif
 
-    const size_t vertex_count = 8;
+    const size_t vertex_count = 16;
 
     float t = -1.0f;
     std::vector<Vector3> line_positions;
     line_positions.resize(vertex_count);
-    for (size_t i = 0; i < vertex_count; i+= 2)
+
+    // 4 Horizontal lines
+    for (size_t i = 0; i < vertex_count / 2; i+= 2)
     {
         t += 0.4f;
         line_positions[i + 0] = { -1.0f, t, 0.0f };
         line_positions[i + 1] = {  1.0f, t, 0.0f };
     }
 
+    // 4 Vertical lines
+    t = -1.0f;
+    for (size_t i = vertex_count / 2; i < vertex_count; i += 2)
+    {
+        t += 0.4f;
+        line_positions[i + 0] = { t, -1.0f, 0.0f };
+        line_positions[i + 1] = { t,  1.0f, 0.0f };
+    }
+
     std::vector<Vector3> line_colors;
     line_colors.resize(vertex_count);
-    for (size_t i = 0; i < vertex_count; i++)
+    for (size_t i = 0; i < vertex_count / 2; i++)
     {
         line_colors[i] = { 1.0f, 0.0f, 0.0f };
     }
-    
+    for (size_t i = vertex_count / 2; i < vertex_count; i++)
+    {
+        line_colors[i] = { 1.0f, 0.0f, 1.0f };
+    }
+        
     assert(vertex_count == line_positions.size() && vertex_count == line_colors.size());
     GLuint line_vao = GL_NONE;
     GLuint line_positions_vbo = GL_NONE;
@@ -101,7 +116,12 @@ int main(void)
 
         glUseProgram(shader_program);
         glBindVertexArray(line_vao);
+
+        glLineWidth(2.0f);
         glDrawArrays(GL_LINES, 0, vertex_count);
+
+        glPointSize(16.0f);
+        glDrawArrays(GL_POINTS, 0, vertex_count);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
