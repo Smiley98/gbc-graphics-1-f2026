@@ -84,8 +84,8 @@ int main(void)
 
     glBindVertexArray(GL_NONE);                                 // "Stop recording vertex buffer state"
 
-    GLuint vs_shader = LoadShader(GL_VERTEX_SHADER, "./assets/shaders/a1_triangle.vert");
-    GLuint fs_shader = LoadShader(GL_FRAGMENT_SHADER, "./assets/shaders/a1_triangle.frag");
+    GLuint vs_shader = LoadShader(GL_VERTEX_SHADER, "./assets/shaders/a2_lines.vert");
+    GLuint fs_shader = LoadShader(GL_FRAGMENT_SHADER, "./assets/shaders/a2_lines.frag");
     GLuint shader_program = LoadProgram(vs_shader, fs_shader);
 
     while (!glfwWindowShouldClose(window))
@@ -93,12 +93,9 @@ int main(void)
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        Matrix matrix = MatrixIdentity();
         glUseProgram(shader_program);
-        GLint loc = glGetUniformLocation(shader_program, "transform");
-        glUniformMatrix4fv(loc, 1, GL_FALSE, MatrixToFloat(matrix));
         glBindVertexArray(triangle_vao);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawArrays(GL_LINE_LOOP, 0, 3);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
