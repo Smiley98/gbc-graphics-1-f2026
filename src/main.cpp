@@ -4,6 +4,7 @@
 #include <raymath.h>
 #include <cassert>
 #include <iostream>
+#include <vector>
 #include "Shader.h"
 
 void APIENTRY DebugCallback(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char* message, const void* userParam);
@@ -47,39 +48,44 @@ int main(void)
     glDebugMessageCallback(DebugCallback, nullptr);
 #endif
 
-    // Face-culling is disabled by default, but we should remember that OpenGL defines front-faces as CCW winding-order
-    Vector3 triangle_positions[] =
+    const size_t vertex_count = 8;
+
+    float t = -1.0f;
+    std::vector<Vector3> line_positions;
+    line_positions.resize(vertex_count);
+    for (size_t i = 0; i < vertex_count; i+= 2)
     {
-        {  0.0f,  0.5f, 0.0f },
-        { -0.5f, -0.5f, 0.0f },
-        {  0.5f, -0.5f, 0.0f }
-    };
+        t += 0.4f;
+        line_positions[i + 0] = { -1.0f, t, 0.0f };
+        line_positions[i + 1] = {  1.0f, t, 0.0f };
+    }
 
-    Vector3 triangle_colors[] =
+    std::vector<Vector3> line_colors;
+    line_colors.resize(vertex_count);
+    for (size_t i = 0; i < vertex_count; i++)
     {
-        {  1.0f, 0.0f, 0.0 },
-        {  0.0f, 1.0f, 0.0 },
-        {  0.0f, 0.0f, 1.0 }
-    };
+        line_colors[i] = { 1.0f, 0.0f, 0.0f };
+    }
+    
+    assert(vertex_count == line_positions.size() && vertex_count == line_colors.size());
+    GLuint line_vao = GL_NONE;
+    GLuint line_positions_vbo = GL_NONE;
+    GLuint line_colors_vbo = GL_NONE;
 
-    GLuint triangle_vao = GL_NONE;
-    GLuint triangle_positions_vbo = GL_NONE;
-    GLuint triangle_colors_vbo = GL_NONE;
+    glGenVertexArrays(1, &line_vao);
+    glGenBuffers(1, &line_positions_vbo);
+    glGenBuffers(1, &line_colors_vbo);
 
-    glGenVertexArrays(1, &triangle_vao);
-    glGenBuffers(1, &triangle_positions_vbo);
-    glGenBuffers(1, &triangle_colors_vbo);
+    glBindVertexArray(line_vao);                            // "Record the following state of vertex buffers within this vertex array"
 
-    glBindVertexArray(triangle_vao);                            // "Record the following state of vertex buffers within this vertex array"
-
-    glBindBuffer(GL_ARRAY_BUFFER, triangle_positions_vbo);      // The following array (vertex) buffer will be described (triangle_positions_vbo):
+    glBindBuffer(GL_ARRAY_BUFFER, line_positions_vbo);      // The following array (vertex) buffer will be described (triangle_positions_vbo):
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);// Index 0, 3 components, float data, no implicit normalization, no stride, no offset
-    glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(Vector3), triangle_positions, GL_STATIC_DRAW); // Transfer memory of triangle_positions into currently bound vbo
+    glBufferData(GL_ARRAY_BUFFER, vertex_count * sizeof(Vector3), line_positions.data(), GL_STATIC_DRAW); // Transfer memory of triangle_positions into currently bound vbo
     glEnableVertexAttribArray(0);
 
-    glBindBuffer(GL_ARRAY_BUFFER, triangle_colors_vbo);         // The following array (vertex) buffer will be described (triangle_colors_vbo):
+    glBindBuffer(GL_ARRAY_BUFFER, line_colors_vbo);         // The following array (vertex) buffer will be described (triangle_colors_vbo):
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);// Index 1, 3 components, float data, no implicit normalization, no stride, no offset
-    glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(Vector3), triangle_colors, GL_STATIC_DRAW); // Transfer memory of triangle_colors into currently bound vbo
+    glBufferData(GL_ARRAY_BUFFER, vertex_count * sizeof(Vector3), line_colors.data(), GL_STATIC_DRAW); // Transfer memory of triangle_colors into currently bound vbo
     glEnableVertexAttribArray(1);
 
     glBindVertexArray(GL_NONE);                                 // "Stop recording vertex buffer state"
@@ -94,8 +100,8 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shader_program);
-        glBindVertexArray(triangle_vao);
-        glDrawArrays(GL_LINE_LOOP, 0, 3);
+        glBindVertexArray(line_vao);
+        glDrawArrays(GL_LINES, 0, vertex_count);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
