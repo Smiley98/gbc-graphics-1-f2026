@@ -25,6 +25,7 @@ struct App
 
 struct Mesh
 {
+    std::vector<Vector3> positions;
     //fastObjMesh cpu_mesh;
 };
 
@@ -32,18 +33,14 @@ void LoadMesh(Mesh* mesh, const char* path)
 {
     fastObjMesh* obj_mesh;
     obj_mesh = fast_obj_read(path);
-
-    // Index count of 6 means our quad of 4 unique vertices becomes 2 triangles --> 2 * 3 = 6 vertices
-    // 6 vertices * 
-
-    std::vector<Vector3> positions;
-    positions.resize(obj_mesh->index_count);
+    
+    mesh->positions.resize(obj_mesh->index_count);
 
     for (fastObjUInt i = 0; i < obj_mesh->index_count; i++)
     {
         Vector3* obj_positions_buffer = (Vector3*)obj_mesh->positions;
         fastObjUInt obj_position_index = obj_mesh->indices[i].p;
-        positions[i] = obj_positions_buffer[obj_position_index];
+        mesh->positions[i] = obj_positions_buffer[obj_position_index];
     }
 
     fast_obj_destroy(obj_mesh);
@@ -63,66 +60,24 @@ int main()
 
     Mesh plane;
     LoadMesh(&plane, "./assets/meshes/plane.obj");
-
-    const size_t vertex_count = 16;
-
-    float t = -1.0f;
-    std::vector<Vector3> line_positions;
-    line_positions.resize(vertex_count);
-
-    // 4 Horizontal lines
-    for (size_t i = 0; i < vertex_count / 2; i+= 2)
-    {
-        t += 0.4f;
-        line_positions[i + 0] = { -1.0f, t, 0.0f };
-        line_positions[i + 1] = {  1.0f, t, 0.0f };
-    }
-
-    // 4 Vertical lines
-    t = -1.0f;
-    for (size_t i = vertex_count / 2; i < vertex_count; i += 2)
-    {
-        t += 0.4f;
-        line_positions[i + 0] = { t, -1.0f, 0.0f };
-        line_positions[i + 1] = { t,  1.0f, 0.0f };
-    }
-
-    std::vector<Vector3> line_colors;
-    line_colors.resize(vertex_count);
-    for (size_t i = 0; i < vertex_count / 2; i++)
-    {
-        line_colors[i] = { 1.0f, 0.0f, 0.0f };
-    }
-    for (size_t i = vertex_count / 2; i < vertex_count; i++)
-    {
-        line_colors[i] = { 1.0f, 0.0f, 1.0f };
-    }
         
-    assert(vertex_count == line_positions.size() && vertex_count == line_colors.size());
-    GLuint line_vao = GL_NONE;
-    GLuint line_positions_vbo = GL_NONE;
-    GLuint line_colors_vbo = GL_NONE;
+    GLuint mesh_vao = GL_NONE;
+    GLuint mesh_positions_vbo = GL_NONE;
 
-    glGenVertexArrays(1, &line_vao);
-    glGenBuffers(1, &line_positions_vbo);
-    glGenBuffers(1, &line_colors_vbo);
+    glGenVertexArrays(1, &mesh_vao);
+    glGenBuffers(1, &mesh_positions_vbo);
 
-    glBindVertexArray(line_vao);                            // "Record the following state of vertex buffers within this vertex array"
+    glBindVertexArray(mesh_vao);
 
-    glBindBuffer(GL_ARRAY_BUFFER, line_positions_vbo);      // The following array (vertex) buffer will be described (triangle_positions_vbo):
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);// Index 0, 3 components, float data, no implicit normalization, no stride, no offset
-    glBufferData(GL_ARRAY_BUFFER, vertex_count * sizeof(Vector3), line_positions.data(), GL_STATIC_DRAW); // Transfer memory of triangle_positions into currently bound vbo
+    glBindBuffer(GL_ARRAY_BUFFER, mesh_positions_vbo);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glBufferData(GL_ARRAY_BUFFER, plane.positions.size() * sizeof(Vector3), plane.positions.data(), GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, line_colors_vbo);         // The following array (vertex) buffer will be described (triangle_colors_vbo):
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);// Index 1, 3 components, float data, no implicit normalization, no stride, no offset
-    glBufferData(GL_ARRAY_BUFFER, vertex_count * sizeof(Vector3), line_colors.data(), GL_STATIC_DRAW); // Transfer memory of triangle_colors into currently bound vbo
-    glEnableVertexAttribArray(1);
 
     glBindVertexArray(GL_NONE);                                 // "Stop recording vertex buffer state"
 
-    GLuint vs_shader = LoadShader(GL_VERTEX_SHADER, "./assets/shaders/a2_lines.vert");
-    GLuint fs_shader = LoadShader(GL_FRAGMENT_SHADER, "./assets/shaders/a2_lines.frag");
+    GLuint vs_shader = LoadShader(GL_VERTEX_SHADER, "./assets/shaders/a3_mesh.vert");
+    GLuint fs_shader = LoadShader(GL_FRAGMENT_SHADER, "./assets/shaders/a3_mesh.frag");
     GLuint shader_program = LoadProgram(vs_shader, fs_shader);
 
     while (!glfwWindowShouldClose(app.window))
@@ -131,13 +86,9 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shader_program);
-        glBindVertexArray(line_vao);
+        glBindVertexArray(mesh_vao);
 
-        glLineWidth(2.0f);
-        glDrawArrays(GL_LINES, 0, vertex_count);
-
-        glPointSize(16.0f);
-        glDrawArrays(GL_POINTS, 0, vertex_count);
+        glDrawArrays(GL_TRIANGLES, 0, plane.positions.size());
 
         glfwSwapBuffers(app.window);
         glfwPollEvents();
