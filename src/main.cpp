@@ -59,7 +59,7 @@ int main()
     Init(&app);
 
     Mesh plane;
-    LoadMesh(&plane, "./assets/meshes/plane.obj");
+    LoadMesh(&plane, "./assets/meshes/monkey.obj");
         
     GLuint mesh_vao = GL_NONE;
     GLuint mesh_positions_vbo = GL_NONE;
@@ -80,12 +80,19 @@ int main()
     GLuint fs_shader = LoadShader(GL_FRAGMENT_SHADER, "./assets/shaders/a3_mesh.frag");
     GLuint shader_program = LoadProgram(vs_shader, fs_shader);
 
+    glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(app.window))
     {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClearDepth(1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        Matrix world = MatrixScale(0.5f, 0.5f, 0.5f) * MatrixRotateY(glfwGetTime() * 100.0f * DEG2RAD);
 
         glUseProgram(shader_program);
+        GLint loc = glGetUniformLocation(shader_program, "u_transform");
+        glUniformMatrix4fv(loc, 1, GL_FALSE, MatrixToFloat(world));
+
         glBindVertexArray(mesh_vao);
 
         glDrawArrays(GL_TRIANGLES, 0, plane.positions.size());
