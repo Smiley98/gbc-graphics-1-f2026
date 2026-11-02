@@ -1,7 +1,12 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
+
+#define FAST_OBJ_IMPLEMENTATION
+#include "fast_obj.h"
+
 #include <raymath.h>
+
 #include <cassert>
 #include <iostream>
 #include <vector>
