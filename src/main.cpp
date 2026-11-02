@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
@@ -17,41 +19,36 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 struct App
 {
+    GLFWwindow* window;
     int object_index;
 };
 
-int main(void)
+struct Mesh
+{
+    //fastObjMesh cpu_mesh;
+};
+
+void LoadMesh(Mesh* mesh, const char* path)
+{
+    fastObjMesh* obj_mesh;
+    obj_mesh = fast_obj_read(path);
+
+
+
+    fast_obj_destroy(obj_mesh);
+}
+
+void UnloadMesh(Mesh* mesh)
+{
+    
+}
+
+void Init(App* app);
+
+int main()
 {
     App app{};
-
-    assert(glfwInit() == GLFW_TRUE);
-
-    // Request certain OpenGL features
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-#ifdef NDEBUG
-    // Don't make a debug context if in release mode
-#else
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
-#endif
-
-    GLFWwindow* window = glfwCreateWindow(1600, 900, "Graphics 1", nullptr, nullptr);
-    assert(window != nullptr);
-
-    glfwSetWindowUserPointer(window, &app);
-    glfwSetKeyCallback(window, KeyCallback);
-
-    glfwMakeContextCurrent(window);
-    assert(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == true);
-
-#ifdef NDEBUG
-#else
-    glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glDebugMessageCallback(DebugCallback, nullptr);
-#endif
+    Init(&app);
 
     const size_t vertex_count = 16;
 
@@ -114,7 +111,7 @@ int main(void)
     GLuint fs_shader = LoadShader(GL_FRAGMENT_SHADER, "./assets/shaders/a2_lines.frag");
     GLuint shader_program = LoadProgram(vs_shader, fs_shader);
 
-    while (!glfwWindowShouldClose(window))
+    while (!glfwWindowShouldClose(app.window))
     {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -128,7 +125,7 @@ int main(void)
         glPointSize(16.0f);
         glDrawArrays(GL_POINTS, 0, vertex_count);
 
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(app.window);
         glfwPollEvents();
     }
 
@@ -150,6 +147,38 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
         // Bound our array to be [0..4]
         ++app->object_index %= 5;
     }
+}
+
+void Init(App* app)
+{
+    assert(glfwInit() == GLFW_TRUE);
+
+    // Request certain OpenGL features
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+#ifdef NDEBUG
+    // Don't make a debug context if in release mode
+#else
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+#endif
+
+    app->window = glfwCreateWindow(1600, 900, "Graphics 1", nullptr, nullptr);
+    assert(app->window != nullptr);
+
+    glfwSetWindowUserPointer(app->window, &app);
+    glfwSetKeyCallback(app->window, KeyCallback);
+
+    glfwMakeContextCurrent(app->window);
+    assert(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == true);
+
+#ifdef NDEBUG
+#else
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glDebugMessageCallback(DebugCallback, nullptr);
+#endif
 }
 
 void APIENTRY DebugCallback(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char* message, const void* userParam)
