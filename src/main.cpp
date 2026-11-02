@@ -33,7 +33,18 @@ void LoadMesh(Mesh* mesh, const char* path)
     fastObjMesh* obj_mesh;
     obj_mesh = fast_obj_read(path);
 
+    // Index count of 6 means our quad of 4 unique vertices becomes 2 triangles --> 2 * 3 = 6 vertices
+    // 6 vertices * 
 
+    std::vector<Vector3> positions;
+    positions.resize(obj_mesh->index_count);
+
+    for (fastObjUInt i = 0; i < obj_mesh->index_count; i++)
+    {
+        Vector3* obj_positions_buffer = (Vector3*)obj_mesh->positions;
+        fastObjUInt obj_position_index = obj_mesh->indices[i].p;
+        positions[i] = obj_positions_buffer[obj_position_index];
+    }
 
     fast_obj_destroy(obj_mesh);
 }
@@ -49,6 +60,9 @@ int main()
 {
     App app{};
     Init(&app);
+
+    Mesh plane;
+    LoadMesh(&plane, "./assets/meshes/plane.obj");
 
     const size_t vertex_count = 16;
 
