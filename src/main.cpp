@@ -17,10 +17,19 @@
 void APIENTRY DebugCallback(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char* message, const void* userParam);
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
+enum ShaderVertexAttribute : int
+{
+    ATTRIBUTE_POSITIONS,
+    ATTRIBUTE_NORMALS,
+    ATTRIBUTE_TCOORDS
+};
+
 struct App
 {
     GLFWwindow* window;
     int object_index;
+    int attribute_color;
+    int color_space;
 };
 
 struct Mesh
@@ -63,7 +72,7 @@ void LoadMesh(Mesh* mesh, const char* path)
     glBindVertexArray(mesh->vao);
 
     glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo_positions);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glVertexAttribPointer(ATTRIBUTE_POSITIONS, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
     glBufferData(GL_ARRAY_BUFFER, mesh->positions.size() * sizeof(Vector3), mesh->positions.data(), GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
 
@@ -86,13 +95,12 @@ int main()
 
     Mesh meshes[2];
     LoadMesh(&meshes[0], "./assets/meshes/plane.obj");
-    LoadMesh(&meshes[1], "./assets/meshes/monkey.obj");
+    LoadMesh(&meshes[1], "./assets/meshes/head.obj");
 
     GLuint vs_shader = LoadShader(GL_VERTEX_SHADER, "./assets/shaders/a3_mesh.vert");
     GLuint fs_shader = LoadShader(GL_FRAGMENT_SHADER, "./assets/shaders/a3_mesh.frag");
     GLuint shader_program = LoadProgram(vs_shader, fs_shader);
 
-    //glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(app.window))
     {
@@ -100,12 +108,15 @@ int main()
         glClearDepth(1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        //Matrix world = MatrixScale(0.5f, 0.5f, 0.5f) * MatrixRotateY(glfwGetTime() * 100.0f * DEG2RAD);
         Matrix world = MatrixIdentity();
 
         glUseProgram(shader_program);
-        GLint loc = glGetUniformLocation(shader_program, "u_transform");
-        glUniformMatrix4fv(loc, 1, GL_FALSE, MatrixToFloat(world));
+        GLint loc_transform = glGetUniformLocation(shader_program, "u_transform");
+        GLint loc_style = glGetUniformLocation(shader_program, "u_style");
+        GLint loc_color_space = glGetUniformLocation(shader_program, "u_color_space");
+        glUniformMatrix4fv(loc_transform, 1, GL_FALSE, MatrixToFloat(world));
+        glUniform1i(loc_style, app.attribute_color);
+        glUniform1i(loc_color_space, app.color_space);
 
         const Mesh& mesh = meshes[app.object_index];
         glBindVertexArray(mesh.vao);
@@ -133,6 +144,17 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
     {
         // Bound our array to be [0..1]
         ++app->object_index %= 2;
+    }
+
+    if (key == GLFW_KEY_C && action == GLFW_PRESS)
+    {
+        // Bound our array to be [0..2]
+        ++app->attribute_color %= 3;
+    }
+    if (key == GLFW_KEY_V && action == GLFW_PRESS)
+    {
+        // Bound our array to be [0..1]
+        ++app->color_space %= 2;
     }
 }
 
