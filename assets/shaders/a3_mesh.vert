@@ -1,16 +1,22 @@
 #version 430 core
 
 layout(location = 0) in vec3 vertex_position;
-//layout(location = 1) in vec3 vertex_normals;
-//layout(location = 2) in vec3 vertex_tcoords;
+layout(location = 1) in vec3 vertex_normal;
+layout(location = 2) in vec2 vertex_tcoord;
 
-out vec3 ndc;
+out vec3 position;
+out vec3 normal;
+out vec2 tcoord;
 
 uniform mat4 u_transform;
 
 void main()
 {
-    ndc = vertex_position;
     vec4 pos = u_transform * vec4(vertex_position, 1.0);
+
+    position = pos.xyz;
+    normal = mat3(u_transform) * vertex_normal;
+    tcoord = vertex_tcoord;
+
     gl_Position = pos;
 }
