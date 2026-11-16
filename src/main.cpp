@@ -93,6 +93,9 @@ int main()
     App app{};
     Init(&app);
 
+    int width, height;
+    glfwGetWindowSize(app.window, &width, &height);
+
     Mesh meshes[2];
     LoadMesh(&meshes[0], "./assets/meshes/plane.obj");
     LoadMesh(&meshes[1], "./assets/meshes/head.obj");
@@ -108,13 +111,20 @@ int main()
         glClearDepth(1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        Matrix world = MatrixIdentity();
+        Matrix world = MatrixScale(2.0f, 2.0f, 1.0f) * MatrixTranslate(0.0f, 0.0f, sinf(glfwGetTime()) * 5.0f);
+        Matrix view = MatrixLookAt({ 0.0f, 0.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, Vector3UnitY);
+        //Matrix proj = MatrixOrtho(-10.0, 10.0, -10.0, 10.0, 0.1, 10.0);                   // 2D projection (objects appear the same size regardless of distance from the camera)
+        Matrix proj = MatrixPerspective(PI * 0.5f, (width / (float)height), 0.1, 100.0);    // 3D projection (objects closer to the camera appear bigger)
+        Matrix mvp = world * view * proj;
 
         glUseProgram(shader_program);
-        GLint loc_transform = glGetUniformLocation(shader_program, "u_transform");
+        GLint loc_world = glGetUniformLocation(shader_program, "u_world");
+        GLint loc_mvp = glGetUniformLocation(shader_program, "u_mvp");
         GLint loc_style = glGetUniformLocation(shader_program, "u_style");
         GLint loc_color_space = glGetUniformLocation(shader_program, "u_color_space");
-        glUniformMatrix4fv(loc_transform, 1, GL_FALSE, MatrixToFloat(world));
+
+        glUniformMatrix4fv(loc_world, 1, GL_FALSE, MatrixToFloat(world));
+        glUniformMatrix4fv(loc_mvp, 1, GL_FALSE, MatrixToFloat(mvp));
         glUniform1i(loc_style, app.attribute_color);
         glUniform1i(loc_color_space, app.color_space);
 
