@@ -49,6 +49,7 @@ struct Mesh
 };
 
 void LoadMeshGpu(Mesh* mesh);
+void LoadMeshPar(Mesh* mesh, par_shapes_mesh* par);
 
 void LoadMeshObj(Mesh* mesh, const char* path)
 {
@@ -77,6 +78,24 @@ void LoadMeshPlane(Mesh* mesh)
     par_shapes_mesh* par = par_shapes_create_plane(1, 1);
     par_shapes_translate(par, -0.5f, -0.5f, 0.0f);
 
+    LoadMeshPar(mesh, par);
+    LoadMeshGpu(mesh);
+
+    par_shapes_free_mesh(par);
+}
+
+void LoadMeshSphere(Mesh* mesh)
+{
+    par_shapes_mesh* par = par_shapes_create_parametric_sphere(8, 8);
+
+    LoadMeshPar(mesh, par);
+    LoadMeshGpu(mesh);
+
+    par_shapes_free_mesh(par);
+}
+
+void LoadMeshPar(Mesh* mesh, par_shapes_mesh* par)
+{
     mesh->index_count = par->ntriangles * 3;
     mesh->positions.resize(mesh->index_count);
     mesh->normals.resize(mesh->index_count);
@@ -96,9 +115,6 @@ void LoadMeshPlane(Mesh* mesh)
         mesh->normals[i] = normal;
         mesh->tcoords[i] = tcoord;
     }
-
-    LoadMeshGpu(mesh);
-    par_shapes_free_mesh(par);
 }
 
 void LoadMeshGpu(Mesh* mesh)
@@ -161,9 +177,10 @@ int main()
     int width, height;
     glfwGetWindowSize(app.window, &width, &height);
 
-    Mesh meshes[2];
+    Mesh meshes[3];
     LoadMeshPlane(&meshes[0]);
-    LoadMeshObj(&meshes[1], "./assets/meshes/head.obj");
+    LoadMeshSphere(&meshes[1]);
+    LoadMeshObj(&meshes[2], "./assets/meshes/head.obj");
 
     GLuint vs_shader = LoadShader(GL_VERTEX_SHADER, "./assets/shaders/a3_mesh.vert");
     GLuint fs_shader = LoadShader(GL_FRAGMENT_SHADER, "./assets/shaders/a3_mesh.frag");
@@ -176,7 +193,9 @@ int main()
         glClearDepth(1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        Matrix world = MatrixScale(2.0f, 2.0f, 1.0f) * MatrixTranslate(0.0f, 0.0f, sinf(glfwGetTime()) * 5.0f);
+        static float animate_z = 0.0f;
+
+        Matrix world = MatrixRotateY(glfwGetTime() * 100.0f * DEG2RAD) * MatrixTranslate(0.0f, 0.0f, 5.0f + (sinf(glfwGetTime()) * 3.0f) * animate_z);
         Matrix view = MatrixLookAt({ 0.0f, 0.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, Vector3UnitY);
         //Matrix proj = MatrixOrtho(-10.0, 10.0, -10.0, 10.0, 0.1, 10.0);                   // 2D projection (objects appear the same size regardless of distance from the camera)
         Matrix proj = MatrixPerspective(PI * 0.5f, (width / (float)height), 0.1, 100.0);    // 3D projection (objects closer to the camera appear bigger)
