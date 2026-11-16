@@ -48,6 +48,8 @@ struct Mesh
     GLuint vbo_tcoords;
 };
 
+void LoadMeshGpu(Mesh* mesh);
+
 void LoadMeshObj(Mesh* mesh, const char* path)
 {
     fastObjMesh* obj_mesh;
@@ -66,36 +68,14 @@ void LoadMeshObj(Mesh* mesh, const char* path)
         // TODO -- sample tcoord indices and add them to the mesh's tcoords buffer
     }
 
+    LoadMeshGpu(mesh);
     fast_obj_destroy(obj_mesh);
-
-    glGenVertexArrays(1, &mesh->vao);
-    glGenBuffers(1, &mesh->vbo_positions);
-    // TODO -- generate vbo handles for mesh normals and mesh tcoords
-
-    glBindVertexArray(mesh->vao);
-
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo_positions);
-    glVertexAttribPointer(ATTRIBUTE_POSITIONS, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-    glBufferData(GL_ARRAY_BUFFER, mesh->positions.size() * sizeof(Vector3), mesh->positions.data(), GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-
-    // TODO -- describe vertex buffers for normals (1) and tcoords (2)
-
-    glBindVertexArray(GL_NONE);
-}
-
-void UnloadMesh(Mesh* mesh)
-{
-    
 }
 
 void LoadMeshPlane(Mesh* mesh)
 {
     par_shapes_mesh* par = par_shapes_create_plane(1, 1);
-    // Bottom-left of our plane is touching [0, 0, 0]
-    // We can translate the plane down and left if we'd like to centre it!
     par_shapes_translate(par, -0.5f, -0.5f, 0.0f);
-    //par_shapes_scale(par, 2.0f, 2.0f, 1.0f);
 
     mesh->index_count = par->ntriangles * 3;
     mesh->positions.resize(mesh->index_count);
@@ -117,17 +97,58 @@ void LoadMeshPlane(Mesh* mesh)
         mesh->tcoords[i] = tcoord;
     }
 
+    LoadMeshGpu(mesh);
+    par_shapes_free_mesh(par);
+}
+
+void LoadMeshGpu(Mesh* mesh)
+{
     glGenVertexArrays(1, &mesh->vao);
     glGenBuffers(1, &mesh->vbo_positions);
+    glGenBuffers(1, &mesh->vbo_normals);
+    glGenBuffers(1, &mesh->vbo_tcoords);
 
     glBindVertexArray(mesh->vao);
 
+    // Note: positions, normals, and tcoords should be identical in size if loaded correctly!
+    // Future improvement: optimize with index buffer (glElementArrayBuffer), but probably not cause that's more work 
+    // TODO -- Change to assert after A3 late submission expires
+
+    assert(!mesh->positions.empty());
     glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo_positions);
     glVertexAttribPointer(ATTRIBUTE_POSITIONS, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
     glBufferData(GL_ARRAY_BUFFER, mesh->positions.size() * sizeof(Vector3), mesh->positions.data(), GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
 
+    if (!mesh->normals.empty())
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo_normals);
+        glVertexAttribPointer(ATTRIBUTE_NORMALS, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+        glBufferData(GL_ARRAY_BUFFER, mesh->normals.size() * sizeof(Vector3), mesh->normals.data(), GL_STATIC_DRAW);
+        glEnableVertexAttribArray(1);
+    }
+    else
+        printf("Warning: Uploading a mesh without normals to the GPU!\n");
+    
+    if (!mesh->tcoords.empty())
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo_tcoords);
+        glVertexAttribPointer(ATTRIBUTE_TCOORDS, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+        glBufferData(GL_ARRAY_BUFFER, mesh->tcoords.size() * sizeof(Vector2), mesh->tcoords.data(), GL_STATIC_DRAW);
+        glEnableVertexAttribArray(2);
+    }
+    else
+        printf("Warning: Uploading a mesh without tcoords to the GPU!\n");
+    
     glBindVertexArray(GL_NONE);
+}
+
+void UnloadMeshGpu(Mesh* mesh)
+{
+    glDeleteBuffers(1, &mesh->vbo_positions);
+    glDeleteBuffers(1, &mesh->vbo_normals);
+    glDeleteBuffers(1, &mesh->vbo_tcoords);
+    glDeleteVertexArrays(1, &mesh->vao);
 }
 
 void Init(App* app);
@@ -140,10 +161,9 @@ int main()
     int width, height;
     glfwGetWindowSize(app.window, &width, &height);
 
-    Mesh meshes[3];
-    LoadMeshObj(&meshes[0], "./assets/meshes/plane.obj");
+    Mesh meshes[2];
+    LoadMeshPlane(&meshes[0]);
     LoadMeshObj(&meshes[1], "./assets/meshes/head.obj");
-    LoadMeshPlane(&meshes[2]);
 
     GLuint vs_shader = LoadShader(GL_VERTEX_SHADER, "./assets/shaders/a3_mesh.vert");
     GLuint fs_shader = LoadShader(GL_FRAGMENT_SHADER, "./assets/shaders/a3_mesh.frag");
