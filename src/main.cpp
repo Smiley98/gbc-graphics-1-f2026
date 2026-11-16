@@ -7,6 +7,9 @@
 #define FAST_OBJ_IMPLEMENTATION
 #include "fast_obj.h"
 
+#define PAR_SHAPES_IMPLEMENTATION
+#include "par_shapes.h"
+
 #include <raymath.h>
 
 #include <cassert>
@@ -92,6 +95,8 @@ int main()
 {
     App app{};
     Init(&app);
+
+    par_shapes_mesh* test = par_shapes_create_parametric_sphere(8, 8);
 
     int width, height;
     glfwGetWindowSize(app.window, &width, &height);
