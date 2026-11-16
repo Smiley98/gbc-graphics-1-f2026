@@ -44,8 +44,8 @@ struct Mesh
 
     GLuint vao;
     GLuint vbo_positions;
-    GLuint vbo_tcoords;
     GLuint vbo_normals;
+    GLuint vbo_tcoords;
 };
 
 void LoadMeshObj(Mesh* mesh, const char* path)
@@ -92,6 +92,10 @@ void UnloadMesh(Mesh* mesh)
 void LoadMeshPlane(Mesh* mesh)
 {
     par_shapes_mesh* par = par_shapes_create_plane(1, 1);
+    // Bottom-left of our plane is touching [0, 0, 0]
+    // We can translate the plane down and left if we'd like to centre it!
+    par_shapes_translate(par, -0.5f, -0.5f, 0.0f);
+    //par_shapes_scale(par, 2.0f, 2.0f, 1.0f);
 
     mesh->index_count = par->ntriangles * 3;
     mesh->positions.resize(mesh->index_count);
@@ -112,6 +116,18 @@ void LoadMeshPlane(Mesh* mesh)
         mesh->normals[i] = normal;
         mesh->tcoords[i] = tcoord;
     }
+
+    glGenVertexArrays(1, &mesh->vao);
+    glGenBuffers(1, &mesh->vbo_positions);
+
+    glBindVertexArray(mesh->vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo_positions);
+    glVertexAttribPointer(ATTRIBUTE_POSITIONS, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glBufferData(GL_ARRAY_BUFFER, mesh->positions.size() * sizeof(Vector3), mesh->positions.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+
+    glBindVertexArray(GL_NONE);
 }
 
 void Init(App* app);
@@ -181,18 +197,15 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
     if (key == GLFW_KEY_TAB && action == GLFW_PRESS)
     {
-        // Bound our array to be [0..1]
-        ++app->object_index %= 2;
+        ++app->object_index %= 3;
     }
 
     if (key == GLFW_KEY_C && action == GLFW_PRESS)
     {
-        // Bound our array to be [0..2]
         ++app->attribute_color %= 3;
     }
     if (key == GLFW_KEY_V && action == GLFW_PRESS)
     {
-        // Bound our array to be [0..1]
         ++app->color_space %= 2;
     }
 }
