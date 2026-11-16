@@ -48,7 +48,7 @@ struct Mesh
     GLuint vbo_normals;
 };
 
-void LoadMesh(Mesh* mesh, const char* path)
+void LoadMeshObj(Mesh* mesh, const char* path)
 {
     fastObjMesh* obj_mesh;
     obj_mesh = fast_obj_read(path);
@@ -89,6 +89,31 @@ void UnloadMesh(Mesh* mesh)
     
 }
 
+void LoadMeshPlane(Mesh* mesh)
+{
+    par_shapes_mesh* par = par_shapes_create_plane(1, 1);
+
+    mesh->index_count = par->ntriangles * 3;
+    mesh->positions.resize(mesh->index_count);
+    mesh->normals.resize(mesh->index_count);
+    mesh->tcoords.resize(mesh->index_count);
+
+    Vector3* positions = (Vector3*)par->points;
+    Vector3* normals = (Vector3*)par->normals;
+    Vector2* tcoords = (Vector2*)par->tcoords;
+    for (int i = 0; i < mesh->index_count; i++)
+    {
+        uint16_t index = par->triangles[i];
+        Vector3 position = positions[index];
+        Vector3 normal = normals[index];
+        Vector2 tcoord = tcoords[index];
+
+        mesh->positions[i] = position;
+        mesh->normals[i] = normal;
+        mesh->tcoords[i] = tcoord;
+    }
+}
+
 void Init(App* app);
 
 int main()
@@ -96,14 +121,13 @@ int main()
     App app{};
     Init(&app);
 
-    par_shapes_mesh* test = par_shapes_create_parametric_sphere(8, 8);
-
     int width, height;
     glfwGetWindowSize(app.window, &width, &height);
 
-    Mesh meshes[2];
-    LoadMesh(&meshes[0], "./assets/meshes/plane.obj");
-    LoadMesh(&meshes[1], "./assets/meshes/head.obj");
+    Mesh meshes[3];
+    LoadMeshObj(&meshes[0], "./assets/meshes/plane.obj");
+    LoadMeshObj(&meshes[1], "./assets/meshes/head.obj");
+    LoadMeshPlane(&meshes[2]);
 
     GLuint vs_shader = LoadShader(GL_VERTEX_SHADER, "./assets/shaders/a3_mesh.vert");
     GLuint fs_shader = LoadShader(GL_FRAGMENT_SHADER, "./assets/shaders/a3_mesh.frag");
