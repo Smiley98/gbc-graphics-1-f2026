@@ -14,12 +14,8 @@ uniform mat4 u_mvp;
 void main()
 {
     position = (u_world * vec4(vertex_position, 1.0)).xyz;
-    normal = vec3(1.0, 0.0, 1.0);
-    tcoord = vec2(1.0, 1.0);
-
-    // Uncomment to test coloring based on vertex attributes
-    //tcoord = vertex_tcoord;
-    //normal = mat3(u_world) * vertex_normal;
+    tcoord = vertex_tcoord;
+    normal = mat3(u_world) * vertex_normal;
 
     gl_Position = u_mvp * vec4(vertex_position, 1.0);
 }
