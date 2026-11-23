@@ -89,6 +89,11 @@
     <ClCompile Include="src\Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="inc\fast_obj.h" />
+    <ClInclude Include="inc\par_shapes.h" />
+    <ClInclude Include="inc\raymath.h" />
+    <ClInclude Include="inc\stb_image.h" />
+    <ClInclude Include="inc\stb_image_write.h" />
     <ClInclude Include="src\Shader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -10,6 +10,12 @@
 #define PAR_SHAPES_IMPLEMENTATION
 #include "par_shapes.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 #include <raymath.h>
 
 #include <cassert>
@@ -174,6 +180,42 @@ void UnloadMeshGpu(Mesh* mesh)
     glDeleteVertexArrays(1, &mesh->vao);
 }
 
+struct Color
+{
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+    unsigned char a;
+};
+
+struct Image
+{
+    std::vector<Color> pixels;
+    int width;
+    int height;
+};
+
+Image GenImageTest()
+{
+    Image img{};
+    img.width = 512;
+    img.height = 512;
+
+    img.pixels.resize(img.width * img.height);
+    for (int x = 0; x < img.width; x++)
+    {
+        for (int y = 0; y < img.height; y++)
+        {
+            Color red = { 255, 0, 0, 255 };
+            Color blue = { 0, 0, 255, 255 };
+            Color color = y >= img.height / 2 ? red : blue;
+            img.pixels[y * img.width + x] = color;
+        }
+    }
+
+    return img;
+}
+
 void Init(App* app);
 
 int main()
@@ -192,6 +234,9 @@ int main()
     GLuint vs_shader = LoadShader(GL_VERTEX_SHADER, "./assets/shaders/a3_mesh.vert");
     GLuint fs_shader = LoadShader(GL_FRAGMENT_SHADER, "./assets/shaders/a3_mesh.frag");
     GLuint shader_program = LoadProgram(vs_shader, fs_shader);
+
+    Image test_image = GenImageTest();
+    stbi_write_png("./assets/textures/test.png", test_image.width, test_image.height, 4, test_image.pixels.data(), 0);
 
     glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(app.window))

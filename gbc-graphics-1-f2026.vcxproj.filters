@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Libraries">
+      <UniqueIdentifier>{c85cae00-402c-4790-8d9b-e4bc64b8e30d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -28,6 +31,21 @@
   <ItemGroup>
     <ClInclude Include="src\Shader.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\fast_obj.h">
+      <Filter>Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\par_shapes.h">
+      <Filter>Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\raymath.h">
+      <Filter>Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\stb_image.h">
+      <Filter>Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\stb_image_write.h">
+      <Filter>Libraries</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
