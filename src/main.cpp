@@ -221,6 +221,7 @@ void Init(App* app);
 int main()
 {
     App app{};
+    app.attribute_color = ATTRIBUTE_TCOORDS + 1;
     Init(&app);
 
     int width, height;
@@ -238,6 +239,10 @@ int main()
     Image test_image = GenImageTest();
     stbi_write_png("./assets/textures/test.png", test_image.width, test_image.height, 4, test_image.pixels.data(), 0);
 
+    stbi_set_flip_vertically_on_load(1);
+    int head_image_width, head_image_height, head_image_channels;
+    stbi_uc* head_image_memory = stbi_load("./assets/textures/head.png", &head_image_width, &head_image_height, &head_image_channels, 4);
+
     GLuint test_texture;
     glGenTextures(1, &test_texture);
     glBindTexture(GL_TEXTURE_2D, test_texture);
@@ -246,6 +251,16 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, test_image.width, test_image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, test_image.pixels.data());
+    glBindTexture(GL_TEXTURE_2D, GL_NONE);
+
+    GLuint head_texture;
+    glGenTextures(1, &head_texture);
+    glBindTexture(GL_TEXTURE_2D, head_texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, head_image_width, head_image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, head_image_memory);
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
 
     glEnable(GL_DEPTH_TEST);
@@ -257,7 +272,9 @@ int main()
 
         static float animate_z = 0.0f;
 
-        Matrix world = MatrixRotateY(glfwGetTime() * 100.0f * DEG2RAD) * MatrixTranslate(0.0f, 0.0f, 5.0f + (sinf(glfwGetTime()) * 3.0f) * animate_z);
+        Matrix translation = MatrixTranslate(0.0f, 0.0f, 5.0f + (sinf(glfwGetTime()) * 3.0f) * animate_z);;
+        Matrix rotation = MatrixRotateY(glfwGetTime() * 00.0f * DEG2RAD);
+        Matrix world = rotation * translation;
         Matrix view = MatrixLookAt({ 0.0f, 0.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, Vector3UnitY);
         //Matrix proj = MatrixOrtho(-10.0, 10.0, -10.0, 10.0, 0.1, 10.0);                   // 2D projection (objects appear the same size regardless of distance from the camera)
         Matrix proj = MatrixPerspective(PI * 0.5f, (width / (float)height), 0.1, 100.0);    // 3D projection (objects closer to the camera appear bigger)
@@ -282,7 +299,7 @@ int main()
         glBindVertexArray(mesh.vao);
 
         glActiveTexture(GL_TEXTURE0 + texture_unit);    // 0 + 15 == 15
-        glBindTexture(GL_TEXTURE_2D, test_texture);     // texture is bound to currently active texture unit (15)
+        glBindTexture(GL_TEXTURE_2D, head_texture);     // texture is bound to currently active texture unit (15)
         glDrawArrays(GL_TRIANGLES, 0, mesh.index_count);
         glActiveTexture(GL_TEXTURE0);                   // 0 is the default active texture unit (reset to default the same way we unbind buffers and textures)
         glBindTexture(GL_TEXTURE_2D, GL_NONE);
@@ -291,6 +308,8 @@ int main()
         glfwPollEvents();
     }
 
+    // TODO (optional): make image loading function that frees memory after uploading to the GPU
+    stbi_image_free(head_image_memory);
     glfwTerminate();
     return 0;
 }
