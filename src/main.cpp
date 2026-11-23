@@ -238,6 +238,16 @@ int main()
     Image test_image = GenImageTest();
     stbi_write_png("./assets/textures/test.png", test_image.width, test_image.height, 4, test_image.pixels.data(), 0);
 
+    GLuint test_texture;
+    glGenTextures(1, &test_texture);
+    glBindTexture(GL_TEXTURE_2D, test_texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, test_image.width, test_image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, test_image.pixels.data());
+    glBindTexture(GL_TEXTURE_2D, GL_NONE);
+
     glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(app.window))
     {
@@ -258,16 +268,24 @@ int main()
         GLint loc_mvp = glGetUniformLocation(shader_program, "u_mvp");
         GLint loc_style = glGetUniformLocation(shader_program, "u_style");
         GLint loc_color_space = glGetUniformLocation(shader_program, "u_color_space");
+        GLint loc_sampler = glGetUniformLocation(shader_program, "u_sampler");
 
         glUniformMatrix4fv(loc_world, 1, GL_FALSE, MatrixToFloat(world));
         glUniformMatrix4fv(loc_mvp, 1, GL_FALSE, MatrixToFloat(mvp));
         glUniform1i(loc_style, app.attribute_color);
         glUniform1i(loc_color_space, app.color_space);
 
+        int texture_unit = 15;
+        glUniform1i(loc_sampler, texture_unit);
+
         const Mesh& mesh = meshes[app.object_index];
         glBindVertexArray(mesh.vao);
 
+        glActiveTexture(GL_TEXTURE0 + texture_unit);    // 0 + 15 == 15
+        glBindTexture(GL_TEXTURE_2D, test_texture);     // texture is bound to currently active texture unit (15)
         glDrawArrays(GL_TRIANGLES, 0, mesh.index_count);
+        glActiveTexture(GL_TEXTURE0);                   // 0 is the default active texture unit (reset to default the same way we unbind buffers and textures)
+        glBindTexture(GL_TEXTURE_2D, GL_NONE);
 
         glfwSwapBuffers(app.window);
         glfwPollEvents();
@@ -293,7 +311,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
     if (key == GLFW_KEY_C && action == GLFW_PRESS)
     {
-        ++app->attribute_color %= 3;
+        ++app->attribute_color %= 4;
     }
     if (key == GLFW_KEY_V && action == GLFW_PRESS)
     {
