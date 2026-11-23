@@ -238,6 +238,8 @@ int main()
 
     Image test_image = GenImageTest();
     stbi_write_png("./assets/textures/test.png", test_image.width, test_image.height, 4, test_image.pixels.data(), 0);
+    stbi__vertical_flip(test_image.pixels.data(), test_image.width, test_image.height, sizeof(Color));
+    // ^ hack to flip our generated image ([0, 0] in image memory is top-left, but [0, 0] in OpenGL texture-space is bottom-left)
 
     stbi_set_flip_vertically_on_load(1);
     int head_image_width, head_image_height, head_image_channels;
@@ -299,7 +301,7 @@ int main()
         glBindVertexArray(mesh.vao);
 
         glActiveTexture(GL_TEXTURE0 + texture_unit);    // 0 + 15 == 15
-        glBindTexture(GL_TEXTURE_2D, head_texture);     // texture is bound to currently active texture unit (15)
+        glBindTexture(GL_TEXTURE_2D, test_texture);     // texture is bound to currently active texture unit (15)
         glDrawArrays(GL_TRIANGLES, 0, mesh.index_count);
         glActiveTexture(GL_TEXTURE0);                   // 0 is the default active texture unit (reset to default the same way we unbind buffers and textures)
         glBindTexture(GL_TEXTURE_2D, GL_NONE);
