@@ -58,15 +58,22 @@ void LoadMeshObj(Mesh* mesh, const char* path)
     
     mesh->index_count = obj_mesh->index_count;
     mesh->positions.resize(mesh->index_count);
+    mesh->normals.resize(mesh->index_count);
+    mesh->tcoords.resize(mesh->index_count);
 
     for (fastObjUInt i = 0; i < mesh->index_count; i++)
     {
         Vector3* obj_positions_buffer = (Vector3*)obj_mesh->positions;
-        fastObjUInt obj_position_index = obj_mesh->indices[i].p;
-        mesh->positions[i] = obj_positions_buffer[obj_position_index];
+        Vector3* obj_normals_buffer = (Vector3*)obj_mesh->normals;
+        Vector2* obj_tcoords_buffer = (Vector2*)obj_mesh->texcoords;
 
-        // TODO -- sample normal indices and add them to the mesh's normals buffer
-        // TODO -- sample tcoord indices and add them to the mesh's tcoords buffer
+        fastObjUInt obj_position_index = obj_mesh->indices[i].p;
+        fastObjUInt obj_normal_index = obj_mesh->indices[i].n;
+        fastObjUInt obj_tcoord_index = obj_mesh->indices[i].t;
+
+        mesh->positions[i] = obj_positions_buffer[obj_position_index];
+        mesh->normals[i] = obj_normals_buffer[obj_normal_index];
+        mesh->tcoords[i] = obj_tcoords_buffer[obj_tcoord_index];
     }
 
     LoadMeshGpu(mesh);
